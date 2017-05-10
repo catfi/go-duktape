@@ -44,6 +44,7 @@ type context struct {
 	duk_context *C.duk_context
 	fnIndex     *functionIndex
 	timerIndex  *timerIndex
+	dispatcher  *Dispatcher
 }
 
 // New returns plain initialized duktape context object
@@ -54,6 +55,7 @@ func New() *Context {
 			duk_context: C.duk_create_heap(nil, nil, nil, nil, nil),
 			fnIndex:     newFunctionIndex(),
 			timerIndex:  &timerIndex{},
+			dispatcher:  CreateDispatcher(),
 		},
 	}
 
@@ -106,6 +108,10 @@ func (d *Context) PushGoFunction(fn func(*Context) int) int {
 	d.PutPropString(-2, goContextPtrProp)
 
 	return idx
+}
+
+func (d *Context) Dispatch(fn func(*Context)) {
+	d.dispatcher.ch <- fn
 }
 
 //export goFunctionCall

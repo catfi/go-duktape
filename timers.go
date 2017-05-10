@@ -42,19 +42,21 @@ func setTimeout(c *Context) int {
 	}
 	go func(id float64) {
 		<-time.After(time.Duration(timeout) * time.Millisecond)
-		c.Lock()
-		defer c.Unlock()
-		if c.duk_context == nil {
-			fmt.Println("[duktape] Warning!\nsetTimeout invokes callback after the context was destroyed.")
-			return
-		}
+		c.Dispatch(func(_ *Context) {
+			// c.Lock()
+			// defer c.Unlock()
+			if c.duk_context == nil {
+				fmt.Println("[duktape] Warning!\nsetTimeout invokes callback after the context was destroyed.")
+				return
+			}
 
-		// check if timer still exists
-		c.putTimer(id)
-		if c.GetType(-1).IsObject() {
-			c.Pcall(0 /* nargs */)
-		}
-		c.dropTimer(id)
+			// check if timer still exists
+			c.putTimer(id)
+			if c.GetType(-1).IsObject() {
+				c.Pcall(0 /* nargs */)
+			}
+			c.dropTimer(id)
+		})
 	}(id)
 	c.PushNumber(id)
 	return 1
@@ -77,28 +79,30 @@ func setInterval(c *Context) int {
 	go func(id float64) {
 		ticker := time.NewTicker(time.Duration(timeout) * time.Millisecond)
 		for _ = range ticker.C {
-			c.Lock()
+			// c.Lock()
 			// check if duktape context exists
 			if c.duk_context == nil {
 				c.dropTimer(id)
 				c.Pop()
 				ticker.Stop()
 				fmt.Println("[duktape] Warning!\nsetInterval invokes callback after the context was destroyed.")
-				c.Unlock()
+				// c.Unlock()
 				continue
 			}
 
 			// check if timer still exists
-			c.putTimer(id)
-			if c.GetType(-1).IsObject() {
-				c.Pcall(0 /* nargs */)
-				c.Pop()
-			} else {
-				c.dropTimer(id)
-				c.Pop()
-				ticker.Stop()
-			}
-			c.Unlock()
+			c.Dispatch(func(_ *Context) {
+				c.putTimer(id)
+				if c.GetType(-1).IsObject() {
+					c.Pcall(0 /* nargs */)
+					c.Pop()
+				} else {
+					c.dropTimer(id)
+					c.Pop()
+					ticker.Stop()
+				}
+				// c.Unlock()
+			})
 		}
 	}(id)
 	c.PushNumber(id)
