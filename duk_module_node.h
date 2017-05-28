@@ -3,7 +3,16 @@
 
 #include "duktape.h"
 
-extern duk_ret_t duk_module_node_peval_main(duk_context *ctx, const char *path);
-extern void duk_module_node_init(duk_context *ctx);
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+duk_ret_t duk_module_node_peval_main(duk_context *ctx, const char *path);
+void duk_module_node_init(duk_context *ctx);
+
+#if defined(__cplusplus)
+}
+#endif
+
 
 #endif  /* DUK_MODULE_NODE_H_INCLUDED */

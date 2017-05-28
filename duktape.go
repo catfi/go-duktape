@@ -8,7 +8,7 @@ package duktape
 #include "duktape.h"
 #include "duk_logging.h"
 #include "duk_print_alert.h"
-#include "duk_module_duktape.h"
+#include "duk_module_node.h"
 #include "duk_console.h"
 extern duk_ret_t goFunctionCall(duk_context *ctx);
 extern void goFinalizeCall(duk_context *ctx);
@@ -17,6 +17,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"regexp"
 	"sync"
 	"unsafe"
@@ -60,9 +61,51 @@ func New() *Context {
 	}
 
 	ctx := d.duk_context
+
 	C.duk_logging_init(ctx, 0)
 	C.duk_print_alert_init(ctx, 0)
-	C.duk_module_duktape_init(ctx)
+
+	d.PushObject()
+	d.PushGoFunction(func(c *Context) int {
+		moduleID := c.RequireString(0)
+		// parent_id := c.RequireString(1)
+
+		c.PushString(moduleID + ".js")
+		return 1
+	})
+	d.PutPropString(-2, "resolve")
+
+	d.PushGoFunction(func(c *Context) int {
+		moduleID := c.RequireString(0)
+		// c.GetPropString(2, "filename")
+		// filename := c.RequireString(-1)
+
+		if moduleID == "underscore.js" {
+			buf, err := ioutil.ReadFile("./js/underscore.js")
+			if err != nil {
+				c.PushErrorObject(ErrType, fmt.Sprintf("cannot load module: %s", moduleID), nil)
+			} else {
+				// log.Printf("loading underscore: \n%s\n", string(buf))
+				c.PushString(string(buf))
+			}
+
+		} else if moduleID == "eventemitter2.js" {
+			buf, err := ioutil.ReadFile("./js/eventemitter2.js")
+			if err != nil {
+				c.PushErrorObject(ErrType, fmt.Sprintf("cannot load module: %s", moduleID), nil)
+			} else {
+				// log.Printf("loading eventemitter2: \n%s\n", string(buf))
+				c.PushString(string(buf))
+			}
+		} else {
+			c.PushErrorObject(ErrType, fmt.Sprintf("unknown module: %s", moduleID), nil)
+		}
+
+		return 1
+	})
+	d.PutPropString(-2, "load")
+
+	C.duk_module_node_init(ctx)
 	C.duk_console_init(ctx, 0)
 
 	return d
