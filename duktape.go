@@ -97,6 +97,14 @@ func New() *Context {
 				// log.Printf("loading eventemitter2: \n%s\n", string(buf))
 				c.PushString(string(buf))
 			}
+		} else if moduleID == "state-machine.js" {
+			buf, err := ioutil.ReadFile("./js/state-machine.js")
+			if err != nil {
+				c.PushErrorObject(ErrType, fmt.Sprintf("cannot load module: %s", moduleID), nil)
+			} else {
+				// log.Printf("loading eventemitter2: \n%s\n", string(buf))
+				c.PushString(string(buf))
+			}
 		} else {
 			c.PushErrorObject(ErrType, fmt.Sprintf("unknown module: %s", moduleID), nil)
 		}
