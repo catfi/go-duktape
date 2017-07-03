@@ -56,11 +56,11 @@ func New() *Context {
 			duk_context: C.duk_create_heap(nil, nil, nil, nil, nil),
 			fnIndex:     newFunctionIndex(),
 			timerIndex:  &timerIndex{},
-			dispatcher:  CreateDispatcher(),
 		},
 	}
 
 	ctx := d.duk_context
+	d.context.dispatcher = CreateDispatcher(d)
 
 	C.duk_logging_init(ctx, 0)
 	C.duk_print_alert_init(ctx, 0)

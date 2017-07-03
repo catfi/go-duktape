@@ -1,14 +1,20 @@
 package duktape
 
+import (
+	"log"
+)
+
 type Dispatcher struct {
 	context *Context
 	ch      chan func(*Context)
 	running bool
 }
 
-func CreateDispatcher() *Dispatcher {
+func CreateDispatcher(context *Context) *Dispatcher {
 	d := &Dispatcher{
-		ch: make(chan func(*Context)),
+		context: context,
+		ch:      make(chan func(*Context)),
+		running: false,
 	}
 	d.Start()
 
@@ -24,7 +30,9 @@ func (d *Dispatcher) Start() {
 				if !ok || !d.running {
 					break
 				}
+				log.Printf("begin dispatch fn")
 				fn(d.context)
+				log.Printf("end dispatch fn")
 			}
 		}
 	}()
