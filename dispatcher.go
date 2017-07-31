@@ -28,11 +28,10 @@ func (d *Dispatcher) Start() {
 			select {
 			case fn, ok := <-d.ch:
 				if !ok || !d.running {
+					log.Printf("dispatcher quit")
 					break
 				}
-				log.Printf("begin dispatch fn")
 				fn(d.context)
-				log.Printf("end dispatch fn")
 			}
 		}
 	}()
